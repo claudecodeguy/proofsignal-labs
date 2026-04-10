@@ -28,8 +28,8 @@ export default function DentalITLeadsPage() {
             </h1>
             <p className="text-lg text-ink-muted leading-relaxed mb-8">
               ProofSignal Labs delivers exclusive dental clinic prospects validated specifically for
-              MSPs and MSSPs that serve the dental market. Not generic leads. Not raw scraped lists.
-              Structured, evidence-backed, ready to work.
+              MSPs and MSSPs that serve the dental market. Not generic leads. Not raw contact lists.
+              Structured, evidence-backed, and ready to work.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/contact" className="btn-primary">Request Dental Leads</Link>

@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     template: "%s | ProofSignal Labs",
   },
   description:
-    "ProofSignal Labs delivers exclusive, evidence-backed dental clinic leads to dental-focused MSPs and MSSPs. Validated leads with confidence scores, not raw scraped lists.",
+    "ProofSignal Labs delivers exclusive, evidence-backed dental clinic leads to dental-focused MSPs and MSSPs. Qualified lead packets with confidence scores and verified contacts — not raw contact lists.",
   keywords: [
     "dental MSP leads",
     "dental clinic leads",
@@ -33,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

@@ -22,11 +22,10 @@ function ConfidenceBar({ score }: { score: number }) {
 function SampleLeadCard() {
   return (
     <div className="card overflow-hidden shadow-panel">
-      {/* Card header */}
       <div className="px-5 pt-5 pb-4 border-b border-border">
         <div className="flex items-start justify-between mb-3">
           <div>
-            <p className="font-mono text-2xs text-ink-faint uppercase tracking-wider mb-1">Sample Lead</p>
+            <p className="font-mono text-2xs text-ink-faint uppercase tracking-wider mb-1">Sample Lead Packet</p>
             <h3 className="font-semibold text-sm text-ink">Bright Smiles Family Dentistry</h3>
             <p className="font-mono text-xs text-ink-muted mt-0.5">brightsmilesdentistry.com</p>
           </div>
@@ -39,7 +38,6 @@ function SampleLeadCard() {
         </div>
       </div>
 
-      {/* Confidence score */}
       <div className="px-5 py-3 border-b border-border/60 bg-canvas-subtle">
         <div className="flex items-center justify-between mb-1.5">
           <span className="font-mono text-2xs text-ink-faint uppercase tracking-wider">Confidence Score</span>
@@ -48,7 +46,6 @@ function SampleLeadCard() {
         <ConfidenceBar score={94} />
       </div>
 
-      {/* Key signals */}
       <div className="px-5 py-4 space-y-2.5">
         {[
           { label: "Practice Software", value: "Dentrix (confirmed)" },
@@ -63,7 +60,6 @@ function SampleLeadCard() {
         ))}
       </div>
 
-      {/* Evidence */}
       <div className="px-5 pb-5">
         <div className="evidence-card text-xs text-ink-muted leading-relaxed">
           <p className="font-mono text-2xs text-teal uppercase tracking-wider mb-1.5">Evidence Snippet</p>
@@ -84,7 +80,6 @@ export default function HomePage() {
 
       {/* ── Hero ── */}
       <section className="relative overflow-hidden grid-texture">
-        {/* Decorative grid accent */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 bg-teal/4 rounded-full blur-3xl" />
           <div className="absolute bottom-0 left-20 w-64 h-64 bg-teal/3 rounded-full blur-2xl" />
@@ -92,7 +87,6 @@ export default function HomePage() {
 
         <div className="relative max-w-6xl mx-auto px-6 py-20 md:py-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Left — copy */}
             <div className="animate-fade-up">
               <div className="flex items-center gap-2 mb-6">
                 <span className="section-label">For Dental MSPs &amp; MSSPs</span>
@@ -106,9 +100,9 @@ export default function HomePage() {
               </h1>
 
               <p className="text-lg text-ink-muted leading-relaxed mb-8 max-w-lg">
-                ProofSignal Labs finds, validates, and packages exclusive dental clinic
+                ProofSignal Labs discovers, validates, and packages exclusive dental clinic
                 prospects for dental-focused MSPs. Every lead includes source evidence,
-                a confidence score, and a clear reason to call—now.
+                a confidence score, a verified work contact, and a clear reason to reach out — now.
               </p>
 
               <div className="flex flex-wrap items-center gap-3 mb-10">
@@ -119,26 +113,26 @@ export default function HomePage() {
                   </svg>
                 </Link>
                 <Link href="/sample-lead" className="btn-secondary">
-                  View Sample Lead
+                  See a Real Sample Lead
                 </Link>
               </div>
 
-              {/* Trust signals */}
+              {/* Credibility bar */}
               <div className="flex flex-wrap items-center gap-5">
                 {[
-                  ["Exclusive per territory", "#1E7B7E"],
-                  ["Evidence-backed", "#1A6B45"],
-                  ["Confidence scored", "#18182B"],
+                  ["Exclusive by territory", "#1E7B7E"],
+                  ["Verified work contacts", "#1A6B45"],
+                  ["Source-backed fields", "#18182B"],
+                  ["Replacement policy", "#18182B"],
                 ].map(([label, color]) => (
                   <div key={label} className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color as string }} />
                     <span className="font-mono text-xs text-ink-muted">{label}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right — sample card */}
             <div className="animate-fade-up delay-200">
               <SampleLeadCard />
             </div>
@@ -146,18 +140,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Ruled separator ── */}
       <div className="max-w-6xl mx-auto px-6 w-full">
         <div className="ruled-line" />
       </div>
 
-      {/* ── Value proposition ── */}
+      {/* ── Why it's different ── */}
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="text-center mb-14">
           <p className="section-label mb-3">Why It&apos;s Different</p>
           <h2 className="section-title">Not a list. A qualified prospect.</h2>
           <p className="section-body mt-4 max-w-xl mx-auto">
-            Raw scraped directories give you names. ProofSignal Labs gives you validated
+            Unqualified contact lists give you names. ProofSignal Labs gives you validated
             prospects with the evidence to start a real conversation.
           </p>
         </div>
@@ -173,7 +166,7 @@ export default function HomePage() {
               label: "Evidence-Backed",
               title: "Every field has a source",
               body:
-                "Location count, practice software, HIPAA signals—each field is extracted from a specific page with the source URL stored alongside it. You see what we saw.",
+                "Location count, practice software, HIPAA signals — each field is extracted from a specific public page with the source URL stored alongside it. You see exactly what we saw.",
             },
             {
               icon: (
@@ -187,7 +180,7 @@ export default function HomePage() {
               label: "Confidence-Scored",
               title: "No guessing. No hallucination.",
               body:
-                "A structured confidence score (0–100) is generated for every record. Leads below threshold are automatically rejected. Borderline records get a second pass.",
+                "A structured confidence score (0–100) is generated for every record. Leads below threshold are automatically rejected. Borderline records receive a second-pass review.",
             },
             {
               icon: (
@@ -199,7 +192,7 @@ export default function HomePage() {
               label: "Exclusive Delivery",
               title: "Locked per territory, per niche",
               body:
-                "Each lead is exclusive within a configured territory window. Once sold, it cannot be delivered to a competitor in the same market during the lock period.",
+                "Every approved lead is locked to your territory and niche for the active exclusivity window. It will not be resold to a competing MSP in your market during that period.",
             },
           ].map(({ icon, label, title, body }) => (
             <div key={label} className="card p-6 group hover:shadow-card-hover transition-shadow">
@@ -214,7 +207,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Deliverable preview ── */}
+      {/* ── What you receive ── */}
       <section className="bg-canvas-subtle border-y border-border py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -225,8 +218,8 @@ export default function HomePage() {
               </h2>
               <p className="section-body mb-8">
                 Each approved lead includes a structured packet: practice snapshot, geography,
-                technology signals, compliance signals, growth triggers, a verified contact,
-                and evidence snippets linked back to source pages.
+                technology signals, compliance signals, growth triggers, a verified work contact,
+                and evidence snippets linked back to their source pages.
               </p>
               <Link href="/sample-lead" className="btn-secondary">
                 View full sample lead packet
@@ -236,7 +229,6 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Lead packet field preview */}
             <div className="card divide-y divide-border overflow-hidden">
               {[
                 { label: "Company", value: "Bright Smiles Family Dentistry" },
@@ -267,7 +259,6 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-          {/* Connector line */}
           <div className="hidden md:block absolute top-8 left-[calc(16.67%+16px)] right-[calc(16.67%+16px)] h-px bg-border" />
 
           {[
@@ -275,19 +266,19 @@ export default function HomePage() {
               step: "01",
               title: "Discover & Validate",
               body:
-                "We discover dental clinic candidates from directories, search, and curated sources. Each candidate is scraped, extracted, and run through our confidence engine. Weak records are automatically rejected.",
+                "We discover dental clinic candidates from approved public sources. Each candidate is reviewed from public business pages, extracted into structured fields, and run through our confidence engine. Weak records are automatically rejected.",
             },
             {
               step: "02",
               title: "Package with Evidence",
               body:
-                "Approved records become structured lead packets. Every field has a source. Technology signals, compliance indicators, and growth triggers are documented and scored.",
+                "Approved records become structured lead packets. Every field has a source. Technology signals, compliance indicators, and growth triggers are documented, scored, and linked to the pages where we found them.",
             },
             {
               step: "03",
               title: "Deliver Exclusively",
               body:
-                "You receive a sample batch for your territory. If you move forward, leads are locked exclusively to your market for the agreed window. No reselling to competitors.",
+                "You receive a sample batch for your territory. If you move forward, leads are locked exclusively to your market for the agreed window. Not resold to competing providers.",
             },
           ].map(({ step, title, body }) => (
             <div key={step} className="relative">
@@ -328,18 +319,112 @@ export default function HomePage() {
             <div className="grid grid-cols-2 gap-4">
               {[
                 { metric: "≥90", label: "Score to auto-approve" },
-                { metric: "4", label: "Pages scraped per record" },
+                { metric: "4", label: "Source pages reviewed per record" },
                 { metric: "0", label: "Invented fields" },
                 { metric: "180d", label: "Default exclusivity window" },
               ].map(({ metric, label }) => (
-                <div
-                  key={label}
-                  className="bg-navy-light border border-navy-border rounded p-5"
-                >
+                <div key={label} className="bg-navy-light border border-navy-border rounded p-5">
                   <p className="font-mono text-3xl font-semibold text-teal-light mb-1">{metric}</p>
                   <p className="text-sm text-navy-text">{label}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Replacement assurance ── */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="card p-6 border-l-2 border-teal">
+            <p className="font-mono text-xs text-teal uppercase tracking-wider mb-3">Replacement Policy</p>
+            <h3 className="font-semibold text-base text-ink mb-2">Material errors are replaced at no charge.</h3>
+            <p className="text-sm text-ink-muted leading-relaxed">
+              Every lead includes the source URLs and evidence items we used to qualify it.
+              If you identify a material data error in a delivered lead, contact us and we will
+              review it and replace it at no charge.
+            </p>
+          </div>
+          <div className="card p-6 border-l-2 border-approved">
+            <p className="font-mono text-xs text-approved uppercase tracking-wider mb-3">Exclusivity Policy</p>
+            <h3 className="font-semibold text-base text-ink mb-2">Your territory, your leads.</h3>
+            <p className="text-sm text-ink-muted leading-relaxed">
+              Approved leads are locked by territory and niche for the active exclusivity window
+              and are not resold to competing MSPs in that market during the lock period.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Pilot results placeholder ── */}
+      <section className="bg-canvas-subtle border-y border-border py-16">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <p className="section-label mb-3">Early Results</p>
+            <h2 className="section-title mb-3">Pilot performance.</h2>
+            <p className="section-body max-w-md mx-auto">
+              As founding-buyer pilots begin, we will publish early operating results here:
+              verification rates, positive replies, meetings booked, and replacement rates.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {[
+              { label: "Leads Delivered", value: "—" },
+              { label: "Verified Contact Rate", value: "—" },
+              { label: "Positive Reply Rate", value: "—" },
+              { label: "Meetings Booked", value: "—" },
+              { label: "Replacement Rate", value: "—" },
+            ].map(({ label, value }) => (
+              <div key={label} className="card p-5 text-center">
+                <p className="font-mono text-2xl font-semibold text-ink-faint mb-1">{value}</p>
+                <p className="font-mono text-2xs text-ink-faint">{label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Testimonials placeholder ── */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="text-center mb-10">
+          <p className="section-label mb-3">Buyer Feedback</p>
+          <h2 className="section-title mb-3">What buyers say.</h2>
+          <p className="section-body max-w-md mx-auto">
+            Early buyer feedback will appear here as pilot batches are delivered.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[
+            "Dental-focused MSP · Southwest U.S.",
+            "Dental-focused MSSP · Texas",
+            "MSP building dental vertical · Southeast U.S.",
+          ].map((label) => (
+            <div key={label} className="card p-6 flex flex-col gap-4">
+              <div className="flex-1 min-h-[80px] flex items-center justify-center border border-dashed border-border rounded">
+                <p className="font-mono text-xs text-ink-faint text-center px-4">Testimonial coming soon</p>
+              </div>
+              <p className="font-mono text-2xs text-ink-faint">{label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Case study placeholder ── */}
+      <section className="bg-canvas-subtle border-y border-border py-16">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div>
+              <p className="section-label mb-3">Case Studies</p>
+              <h2 className="section-title mb-3">Founding-buyer outcomes.</h2>
+              <p className="section-body">
+                Case studies will be published here as pilot engagements conclude.
+                Each will include buyer type, territory, what was delivered, and early results.
+              </p>
+            </div>
+            <div className="lg:col-span-2 card p-6 flex items-center justify-center min-h-[160px] border border-dashed border-border">
+              <p className="font-mono text-xs text-ink-faint text-center">
+                First case study in progress — publishing after pilot batch conclusion.
+              </p>
             </div>
           </div>
         </div>
@@ -357,15 +442,15 @@ export default function HomePage() {
             {[
               {
                 q: "How is this different from a list broker or ZoomInfo?",
-                a: "List brokers deliver raw contact data with no validation of fit. ZoomInfo gives you contacts, not dental clinic analysis. ProofSignal Labs gives you a structured lead packet with evidence of why each clinic is a fit for IT services, plus a confidence score and a verified contact.",
+                a: "ZoomInfo is a broad contact database — it gives you contacts, not dental clinic analysis. List brokers deliver raw contact data with no validation of fit. ProofSignal Labs is a vertical lead intelligence product: every lead includes evidence of why each clinic is a fit for IT services, a confidence score, and a verified work contact. It's a qualified prospect, not a database row.",
               },
               {
                 q: "Are leads really exclusive?",
-                a: "Yes. Each sold lead is locked to your territory and niche for a configurable window (default 180 days). We do not sell the same lead to competing MSPs in your market during that period.",
+                a: "Yes. Every approved lead is locked to your territory and niche for a configurable window (default 180 days). We do not sell the same lead to competing MSPs in your market during that period.",
               },
               {
                 q: "What does a sample batch look like?",
-                a: "A sample batch is typically 3–5 approved lead packets from your target region. Each includes the full lead data: company snapshot, contact, evidence items, confidence score, and a why-now trigger reason.",
+                a: "A sample batch is typically 3–5 approved lead packets from your target region. Each includes the full lead: company snapshot, verified contact, evidence items with source URLs, confidence score, and a why-now trigger reason.",
               },
               {
                 q: "What geographies do you cover?",
@@ -373,7 +458,11 @@ export default function HomePage() {
               },
               {
                 q: "What if a lead turns out to be wrong?",
-                a: "Every lead includes the source URLs and evidence snippets we used to score it. If you find a material error, contact us and we will review and replace it at no charge.",
+                a: "Every lead includes the source URLs and evidence items we used to score it. If you identify a material error, contact us and we will review it and replace it at no charge.",
+              },
+              {
+                q: "Do you guarantee meetings or revenue?",
+                a: "No. We validate using publicly available evidence and deliver qualified prospects — not guarantees. What we can promise is that every approved lead passed our confidence threshold, includes source-backed fields, and comes with a verified work contact.",
               },
             ].map(({ q, a }) => (
               <details key={q} className="group py-5 cursor-pointer">
@@ -401,11 +490,11 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-6 text-center">
           <p className="section-label mb-4">Get Started</p>
           <h2 className="font-display text-3xl sm:text-4xl text-ink leading-tight mb-5">
-            Ready to see a real sample batch?
+            Tell us your territory. See real leads.
           </h2>
           <p className="text-ink-muted mb-8 max-w-md mx-auto">
-            Tell us your territory and we&apos;ll send 3–5 approved, evidence-backed dental
-            clinic leads from your market within 48 hours.
+            We&apos;ll prepare 3–5 approved, evidence-backed dental clinic prospects from your
+            market. No obligation. No generic list.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/contact" className="btn-primary">

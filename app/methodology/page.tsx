@@ -5,7 +5,7 @@ import Footer from "@/components/public/Footer";
 export const metadata: Metadata = {
   title: "Methodology – How ProofSignal Labs Validates Dental Clinic Leads",
   description:
-    "Learn how ProofSignal Labs discovers, scrapes, validates, and scores dental clinic leads using a structured confidence engine.",
+    "Learn how ProofSignal Labs discovers, validates, and scores dental clinic leads using public-source research, structured extraction, and a confidence engine.",
 };
 
 function Step({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
@@ -37,10 +37,14 @@ export default function MethodologyPage() {
           <h1 className="font-display text-4xl sm:text-5xl text-ink leading-tight mb-5">
             How we build a lead you can trust.
           </h1>
-          <p className="text-lg text-ink-muted leading-relaxed">
-            Every ProofSignal Labs lead is the output of a structured pipeline: candidate discovery,
-            controlled scraping, structured extraction, automated validation, and confidence scoring.
-            No hallucination. No invented fields. No guessing.
+          <p className="text-lg text-ink-muted leading-relaxed mb-5">
+            Every ProofSignal Labs lead is the output of a structured validation pipeline:
+            candidate discovery, controlled source collection, structured extraction, automated
+            validation, and confidence scoring. No hallucination. No invented fields. No guessing.
+          </p>
+          <p className="text-sm text-ink-muted leading-relaxed border-l-2 border-teal pl-4">
+            We rely on approved public business pages and structured validation so buyers receive
+            evidence-backed prospect packets rather than generic lists or unsupported contact data.
           </p>
         </div>
       </section>
@@ -70,19 +74,18 @@ export default function MethodologyPage() {
             <p>
               We discover dental clinic candidates through structured discovery jobs. Sources include
               dental directories, search-driven domain discovery, and curated source page ingestion.
-              Each discovery run is scoped to a specific U.S. region—state, metro, or city—so results
-              stay relevant and manageable.
+              Each discovery run is scoped to a specific U.S. region — state, metro, or city — so
+              results stay relevant and manageable.
             </p>
             <p>
-              Admins configure the region, keyword strategy, and candidate limit before a run begins.
-              Discovery runs against the active vertical pack&apos;s configuration, not hard-coded search
-              logic. This ensures dental-specific patterns are used consistently.
+              Discovery runs against the active vertical configuration, not hard-coded search logic.
+              This ensures dental-specific patterns are applied consistently across every run.
             </p>
           </Step>
 
-          <Step number="02" title="Controlled Scraping">
+          <Step number="02" title="Source Collection">
             <p>
-              For each candidate, we scrape a small, fixed set of approved page types only.
+              For each candidate, we review a small, fixed set of approved public page types only.
               We do not run recursive site crawls. Page targets in Phase 1 include:
             </p>
             <ul className="list-none space-y-1 font-mono text-xs text-ink-muted">
@@ -94,17 +97,17 @@ export default function MethodologyPage() {
               ))}
             </ul>
             <p>
-              The default cap is 4 pages per company. Borderline records may be escalated to 6 pages
-              if key fields are missing and the run still has budget remaining. Page content is hashed
-              so unchanged pages are not reprocessed unnecessarily.
+              The default cap is 4 approved pages per company. Borderline records may be escalated
+              to 6 pages if key fields are missing and the run still has budget remaining. Page
+              content is hashed so unchanged pages are not reprocessed unnecessarily.
             </p>
           </Step>
 
           <Step number="03" title="Structured Extraction">
             <p>
-              Scraped pages are processed through a structured extraction pipeline. Each field is extracted
-              individually with a confidence rating attached. The system does not summarize or paraphrase
-              freely—it extracts specific, attributable values.
+              Approved pages are analyzed through a structured extraction pipeline. Each field is
+              extracted individually with a confidence rating attached. The system does not summarize
+              or paraphrase freely — it extracts specific, attributable values from public sources.
             </p>
             <p>
               Evidence items are stored alongside each extracted field. Each evidence item records:
@@ -144,8 +147,8 @@ export default function MethodologyPage() {
             </ul>
             <p>
               Cross-check rules verify consistency across pages. Company name, location, and vertical
-              classification must be supported by evidence from at least two sources—or one very strong,
-              unambiguous signal.
+              classification must be supported by evidence from at least two sources — or one very
+              strong, unambiguous signal.
             </p>
           </Step>
 
@@ -172,7 +175,7 @@ export default function MethodologyPage() {
               ))}
             </div>
             <p>
-              Borderline records (75–89) receive an optional second-pass adjudication using a
+              Borderline records (75–89) receive an optional second-pass review using a
               higher-reasoning model if budget permits. If the record remains uncertain, it is
               automatically rejected.
             </p>

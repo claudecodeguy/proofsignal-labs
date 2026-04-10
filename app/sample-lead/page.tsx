@@ -117,9 +117,14 @@ export default function SampleLeadPage() {
       {/* Header */}
       <section className="border-b border-border bg-canvas-subtle py-12">
         <div className="max-w-5xl mx-auto px-6">
+          <p className="section-label mb-4">Sample Lead Packet</p>
+          <p className="text-sm text-ink-muted leading-relaxed mb-6 max-w-2xl border-l-2 border-teal pl-4">
+            This is the level of context each approved lead is built to deliver: company snapshot,
+            timing signal, verified work contact, source evidence, and confidence score.
+            Not a spreadsheet row — a qualified prospect.
+          </p>
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
-              <p className="section-label mb-3">Sample Lead Packet</p>
               <h1 className="font-display text-3xl sm:text-4xl text-ink leading-tight">
                 Bright Smiles Family Dentistry
               </h1>
@@ -129,6 +134,20 @@ export default function SampleLeadPage() {
               <span className="badge-approved text-sm px-3 py-1">Approved</span>
               <span className="badge-teal">Dental MSP</span>
             </div>
+          </div>
+          {/* Trust callouts */}
+          <div className="flex flex-wrap gap-3 mt-5">
+            {[
+              "Verified work contact",
+              "Source-backed fields",
+              "Confidence threshold passed",
+              "Territory available",
+              "Material-error replacement available",
+            ].map((tag) => (
+              <span key={tag} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-approved-bg text-approved border border-approved-border text-2xs font-mono">
+                <span>✓</span> {tag}
+              </span>
+            ))}
           </div>
         </div>
       </section>
@@ -218,7 +237,7 @@ export default function SampleLeadPage() {
 
             {/* Source URLs */}
             <div>
-              <h2 className="font-mono text-xs font-medium text-ink-faint uppercase tracking-wider mb-4">Source Pages Scraped</h2>
+              <h2 className="font-mono text-xs font-medium text-ink-faint uppercase tracking-wider mb-4">Source Pages Reviewed</h2>
               <div className="card p-5 space-y-2">
                 {[
                   "brightsmilesdentistry.com",

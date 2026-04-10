@@ -27,9 +27,14 @@ export default function ContactPage() {
         <div className="max-w-3xl mx-auto px-6">
           <p className="section-label mb-3">Contact</p>
           <h1 className="font-display text-4xl sm:text-5xl text-ink leading-tight mb-3">
-            Request a sample batch or ask us anything.
+            Tell us your territory. We&apos;ll prepare your sample.
           </h1>
-          <p className="text-ink-muted">
+          <p className="text-ink-muted mb-2">
+            This form is for dental-focused MSPs and MSSPs. Tell us your target territory
+            and we&apos;ll prepare 3–5 approved, evidence-backed dental clinic prospects from
+            that market — at no charge, no obligation.
+          </p>
+          <p className="font-mono text-xs text-ink-faint">
             We respond to all business inquiries within one business day.
           </p>
         </div>
@@ -44,8 +49,8 @@ export default function ContactPage() {
                 Sample Batch
               </p>
               <p className="text-sm text-ink-muted leading-relaxed">
-                We send 3–5 validated dental clinic leads from your target territory,
-                free to qualified buyers. No commitment required.
+                We prepare 3–5 approved, evidence-backed dental clinic prospects from
+                your target territory. Free to qualified buyers. No commitment required.
               </p>
             </div>
             <div>
