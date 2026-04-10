@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DASHBOARD_STATS, DISCOVERY_RUNS } from "@/lib/mock-data";

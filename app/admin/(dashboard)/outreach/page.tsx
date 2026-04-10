@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/utils";
 import DraftPanel from "./DraftPanel";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Outreach" };
 
 const STATUS_BADGE: Record<string, string> = {
