@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment files — never commit these
+.env
+.env.local
+.env.*.local
+
+# Prisma
+prisma/generated/
+
+# Build output
+build/
+dist/
+
+# OS
+.DS_Store

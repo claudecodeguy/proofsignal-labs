@@ -1,0 +1,469 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // bcrypt hash
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// ─── Vertical Packs ──────────────────────────────────────────────────────────
+
+model Vertical {
+  id          String         @id @default(cuid())
+  key         String         @unique // e.g. "dental_msp_us"
+  label       String         // e.g. "Dental Clinic Leads → Dental MSPs/MSSPs"
+  active      Boolean        @default(false)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  config      VerticalConfig?
+  companies   CompanyRaw[]
+  buyers      Buyer[]
+  runs        DiscoveryRun[]
+
+  @@map("verticals")
+}
+
+model VerticalConfig {
+  id                   String   @id @default(cuid())
+  verticalId           String   @unique
+  vertical             Vertical @relation(fields: [verticalId], references: [id], onDelete: Cascade)
+
+  // Discovery settings
+  defaultKeywords      String[] // ["dental clinic", "dental group", "family dentistry"]
+  defaultPageTargets   String[] // ["homepage","about","contact","locations","careers"]
+  buyerSearchKeywords  String[] // ["dental IT support", "dental MSP"]
+
+  // Scoring weights (JSON stored as string — replace with Json type if needed)
+  scoringWeights       String   @default("{}") // JSON
+
+  // Extraction schema extensions (vertical-specific fields)
+  extractionSchema     String   @default("{}") // JSON
+
+  // Prompt templates
+  classificationPrompt String   @default("")
+  extractionPrompt     String   @default("")
+  adjudicationPrompt   String   @default("")
+  outreachTemplate     String   @default("")
+  followupTemplate     String   @default("")
+
+  // ICP definitions
+  endCustomerIcp       String   @default("") // description of ideal dental clinic
+  buyerIcp             String   @default("") // description of ideal MSP/MSSP buyer
+
+  // Preferred contact roles (ordered)
+  contactRolePriority  String[] @default(["owner", "practice administrator", "office manager", "operations manager"])
+  buyerRolePriority    String[] @default(["founder", "business development", "sales leader"])
+
+  // Exclusivity defaults
+  defaultLockDays      Int      @default(180)
+  lockByTerritory      String   @default("state") // "state" | "metro" | "city"
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("vertical_configs")
+}
+
+// ─── Discovery Runs ───────────────────────────────────────────────────────────
+
+model DiscoveryRun {
+  id               String     @id @default(cuid())
+  verticalId       String
+  vertical         Vertical   @relation(fields: [verticalId], references: [id])
+
+  targetType       String     // "company" | "buyer"
+  region           String     // e.g. "Texas", "Austin, TX"
+  regionState      String?    // e.g. "TX"
+  regionCity       String?
+  keywords         String[]
+  status           String     @default("pending") // pending | running | completed | failed | cancelled
+  errorMessage     String?
+
+  // Budgets for this run
+  maxCompanies     Int        @default(500)
+  maxPages         Int        @default(2000)
+  maxHaikuCalls    Int        @default(2000)
+  maxSonnetCalls   Int        @default(100)
+  sonnetEnabled    Boolean    @default(true)
+
+  // Actuals
+  candidatesFound  Int        @default(0)
+  approved         Int        @default(0)
+  borderline       Int        @default(0)
+  rejected         Int        @default(0)
+  pagesScraped     Int        @default(0)
+  firecrawlCredits Int        @default(0)
+  haikuCalls       Int        @default(0)
+  sonnetCalls      Int        @default(0)
+
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  companies        CompanyRaw[]
+
+  @@map("discovery_runs")
+}
+
+// ─── Companies (raw candidates) ───────────────────────────────────────────────
+
+model CompanyRaw {
+  id                       String    @id @default(cuid())
+  verticalId               String
+  vertical                 Vertical  @relation(fields: [verticalId], references: [id])
+  discoveryRunId           String?
+  discoveryRun             DiscoveryRun? @relation(fields: [discoveryRunId], references: [id])
+
+  // Core identity
+  companyName              String
+  domain                   String
+  homepageUrl              String?
+  normalizedDomain         String    // lowercase, stripped of www/protocol — used for dedup
+
+  // Geography
+  city                     String?
+  state                    String?
+  country                  String    @default("US")
+  regionConfidence         String?   // "high" | "medium" | "low"
+
+  // Vertical classification
+  matchesActiveVertical    Boolean   @default(false)
+  verticalMatchConfidence  Int       @default(0) // 0-100
+  locationCountEstimate    Int?
+  locationCountConfidence  String?   // "high" | "medium" | "low"
+
+  // Contact
+  contactName              String?
+  contactRole              String?
+  contactEmail             String?
+  contactEmailVerified     Boolean   @default(false)
+  contactEmailCatchAll     Boolean   @default(false)
+  contactPhone             String?
+
+  // Signals (stored as JSON arrays)
+  technologyClues          String[]  @default([])
+  complianceClues          String[]  @default([])
+  growthSignals            String[]  @default([])
+  fitSignals               String[]  @default([])
+  triggerSignals           String[]  @default([])
+  whyNowReason             String?
+
+  // Vertical-specific payload (JSON)
+  verticalPayload          String    @default("{}") // JSON
+
+  // Source
+  discoverySource          String    @default("search") // "search" | "directory" | "csv_import" | "manual"
+  sourceUrls               String[]  @default([])
+
+  // Scoring
+  fitScore                 Int       @default(0)
+  confidenceScore          Int       @default(0)
+  validationStatus         String    @default("pending") // pending | approved | borderline | rejected
+  rejectionReason          String?
+
+  // Dedup
+  isDuplicate              Boolean   @default(false)
+  duplicateOfId            String?
+
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  pages                    Page[]
+  evidenceItems            EvidenceItem[]
+  lead                     Lead?
+  validationLogs           ValidationLog[]
+
+  @@unique([normalizedDomain, verticalId]) // dedup per vertical
+  @@index([validationStatus])
+  @@index([state])
+  @@index([discoverySource])
+  @@map("companies_raw")
+}
+
+// ─── Pages ────────────────────────────────────────────────────────────────────
+
+model Page {
+  id            String      @id @default(cuid())
+  companyId     String?
+  company       CompanyRaw? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  buyerId       String?
+  buyer         Buyer?      @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+
+  url           String
+  pageType      String      // "homepage" | "about" | "contact" | "locations" | "careers" | "services" | "privacy"
+  contentHash   String?     // SHA256 of content — skip reprocessing if unchanged
+  scrapedAt     DateTime?
+  scrapedOk     Boolean     @default(false)
+  errorMessage  String?
+  retryCount    Int         @default(0)
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([companyId])
+  @@index([buyerId])
+  @@map("pages")
+}
+
+// ─── Evidence Items ───────────────────────────────────────────────────────────
+
+model EvidenceItem {
+  id            String      @id @default(cuid())
+  companyId     String?
+  company       CompanyRaw? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  buyerId       String?
+  buyer         Buyer?      @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  leadId        String?
+  lead          Lead?       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  fieldName     String      // e.g. "technology_clues", "location_count"
+  evidenceText  String
+  sourceUrl     String
+  pageTitle     String?
+  sourceType    String      // "homepage" | "about" | "careers" etc.
+  confidence    Int         // 0-100
+
+  createdAt     DateTime    @default(now())
+
+  @@index([companyId])
+  @@index([leadId])
+  @@map("evidence_items")
+}
+
+// ─── Leads ────────────────────────────────────────────────────────────────────
+
+model Lead {
+  id                String     @id @default(cuid())
+  companyId         String     @unique
+  company           CompanyRaw @relation(fields: [companyId], references: [id])
+
+  status            String     @default("approved") // approved | rejected
+  fitScore          Int        @default(0)
+  confidenceScore   Int        @default(0)
+  validationSummary String?
+
+  // Snapshot fields (denormalized for fast access)
+  companyName       String
+  domain            String
+  city              String?
+  state             String?
+  contactName       String?
+  contactRole       String?
+  contactEmail      String?
+  contactEmailVerified Boolean @default(false)
+  whyNowReason      String?
+
+  approvedAt        DateTime   @default(now())
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  evidenceItems     EvidenceItem[]
+  exclusivityLocks  ExclusivityLock[]
+  outreachMessages  OutreachMessageLead[]
+  validationLogs    ValidationLog[]
+
+  @@index([status])
+  @@index([state])
+  @@map("leads")
+}
+
+// ─── Validation Logs ──────────────────────────────────────────────────────────
+
+model ValidationLog {
+  id                    String      @id @default(cuid())
+  companyId             String?
+  company               CompanyRaw? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  leadId                String?
+  lead                  Lead?       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  decision              String      // "approved" | "borderline" | "rejected"
+  reasonSummary         String
+  topSupportingEvidence String[]    @default([])
+  topMissingEvidence    String[]    @default([])
+  modelUsed             String?     // "haiku" | "sonnet" | "deterministic"
+  rawModelOutput        String?     // JSON — for audit
+
+  createdAt             DateTime    @default(now())
+
+  @@index([companyId])
+  @@map("validation_logs")
+}
+
+// ─── Buyers ───────────────────────────────────────────────────────────────────
+
+model Buyer {
+  id                   String    @id @default(cuid())
+  verticalId           String
+  vertical             Vertical  @relation(fields: [verticalId], references: [id])
+
+  buyerCompanyName     String
+  domain               String
+  normalizedDomain     String
+  buyerCity            String?
+  buyerState           String?
+  buyerCountry         String    @default("US")
+
+  servesActiveVertical Boolean   @default(false)
+  buyerNicheConfidence Int       @default(0) // 0-100
+  buyerServices        String?   // summary text
+  territoryFocus       String?   // "TX, OK, LA"
+  buyerFitScore        Int       @default(0)
+
+  // Primary contact
+  contactName          String?
+  contactRole          String?
+  contactEmail         String?
+  contactEmailVerified Boolean   @default(false)
+  contactEmailCatchAll Boolean   @default(false)
+  contactPhone         String?
+
+  // Vertical-specific payload (JSON)
+  verticalPayload      String    @default("{}") // JSON
+
+  // CRM
+  stage                String    @default("discovered")
+  // discovered | enriched | ready_for_outreach | sample_sent | engaged
+  // | pilot_discussion | pilot_active | closed_won | closed_lost | suppressed
+  notes                String?
+  sourceUrls           String[]  @default([])
+  discoverySource      String    @default("search")
+
+  isSuppressed         Boolean   @default(false)
+  suppressedAt         DateTime?
+  suppressedReason     String?
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  pages                Page[]
+  evidenceItems        EvidenceItem[]
+  outreachMessages     OutreachMessage[]
+  suppressionRecords   SuppressionRecord[]
+
+  @@unique([normalizedDomain, verticalId])
+  @@index([stage])
+  @@index([buyerState])
+  @@map("buyers")
+}
+
+// ─── Outreach ─────────────────────────────────────────────────────────────────
+
+model OutreachCampaign {
+  id           String            @id @default(cuid())
+  name         String
+  verticalId   String?
+  templateUsed String?
+  status       String            @default("active") // active | paused | completed
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  messages     OutreachMessage[]
+
+  @@map("outreach_campaigns")
+}
+
+model OutreachMessage {
+  id               String               @id @default(cuid())
+  campaignId       String?
+  campaign         OutreachCampaign?    @relation(fields: [campaignId], references: [id])
+  buyerId          String
+  buyer            Buyer                @relation(fields: [buyerId], references: [id])
+
+  subject          String
+  bodyText         String               // plain text snapshot
+  templateUsed     String?
+  emailType        String               // "initial" | "followup" | "breakup"
+  senderEmail      String
+  senderName       String
+
+  sentAt           DateTime?
+  status           String               @default("draft") // draft | sent | replied | bounced | unsubscribed
+  replyAt          DateTime?
+  replyText        String?
+  errorMessage     String?
+
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  leadsAttached    OutreachMessageLead[]
+
+  @@index([buyerId])
+  @@index([status])
+  @@map("outreach_messages")
+}
+
+model OutreachMessageLead {
+  messageId  String
+  message    OutreachMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  leadId     String
+  lead       Lead            @relation(fields: [leadId], references: [id])
+
+  @@id([messageId, leadId])
+  @@map("outreach_message_leads")
+}
+
+// ─── Suppression ──────────────────────────────────────────────────────────────
+
+model SuppressionRecord {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  buyerId     String?
+  buyer       Buyer?    @relation(fields: [buyerId], references: [id])
+  reason      String    // "unsubscribe" | "bounce" | "manual"
+  suppressedAt DateTime @default(now())
+
+  @@index([email])
+  @@map("suppression_records")
+}
+
+// ─── Exclusivity ──────────────────────────────────────────────────────────────
+
+model ExclusivityLock {
+  id              String    @id @default(cuid())
+  leadId          String
+  lead            Lead      @relation(fields: [leadId], references: [id])
+
+  buyerCompanyName String
+  buyerDomain     String
+  territory       String    // state code or metro label
+  nicheKey        String    // e.g. "dental_msp_us"
+
+  lockedAt        DateTime  @default(now())
+  expiresAt       DateTime
+  expiredManually Boolean   @default(false)
+  active          Boolean   @default(true)
+
+  createdAt       DateTime  @default(now())
+
+  @@index([leadId])
+  @@index([territory, nicheKey, active])
+  @@map("exclusivity_locks")
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   // JSON or plain string
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
