@@ -42,12 +42,13 @@ function buildInitialPrompt(buyer: BuyerContext, leads: LeadSummary[]): string {
   const senderAddress = process.env.SENDER_ADDRESS ?? "Austin, TX";
 
   const leadBlock = leads
-    .map((l, i) => {
+    .map((l) => {
       const geo = [l.city, l.state].filter(Boolean).join(", ");
-      const locs = l.locationCount ? `${l.locationCount} locations` : "single location";
-      const signals = l.fitSignals.slice(0, 2).join("; ");
-      const trigger = l.whyNowReason ? `\n   Why now: ${l.whyNowReason}` : "";
-      return `${i + 1}. ${l.companyName} — ${geo} (${locs})${signals ? `\n   Signals: ${signals}` : ""}${trigger}`;
+      const lines: string[] = [`- ${l.companyName} (${geo})`];
+      if (l.locationCount && l.locationCount > 1) lines.push(`  - ${l.locationCount} locations`);
+      if (l.fitSignals.length > 0) lines.push(`  - ${l.fitSignals[0]}`);
+      if (l.whyNowReason) lines.push(`  - ${l.whyNowReason}`);
+      return lines.join("\n");
     })
     .join("\n");
 
@@ -66,7 +67,7 @@ ${leadBlock || "(no leads provided — write email without specific examples, of
 RULES:
 - Greeting: "${greeting}"
 - 3 short paragraphs, plain and direct
-- If leads are provided: name 2-3 specific clinics with city and one concrete detail (location count, why-now trigger, or practice software)
+- If leads are provided: include the lead list EXACTLY as formatted below, preserving the bullet structure. Write 1-2 sentences introducing the list, then paste the list as-is, then continue with the CTA paragraph.
 - If no leads: mention we have verified dental clinic leads in their territory and offer a free sample batch
 - Value prop: we pre-qualify dental clinics and surface why-now signals so they don't waste time on cold research
 - CTA: ask them to reply if they want to see the full lead details, or ask for a 15-min call
