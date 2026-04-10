@@ -6,14 +6,6 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import { createHmac } from "crypto";
-
-function unsubscribeUrl(email: string): string {
-  const secret = process.env.NEXTAUTH_SECRET ?? "proofsignal-unsub-secret";
-  const token = createHmac("sha256", secret).update(email.toLowerCase()).digest("hex");
-  const base = process.env.NEXTAUTH_URL ?? "https://proofsignallabs.com";
-  return `${base}/api/unsubscribe?email=${encodeURIComponent(email)}&token=${token}`;
-}
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY ?? "",
@@ -48,7 +40,6 @@ export interface DraftResult {
 function buildInitialPrompt(buyer: BuyerContext, leads: LeadSummary[]): string {
   const senderName = process.env.SENDER_NAME ?? "ProofSignal Labs";
   const senderAddress = process.env.SENDER_ADDRESS ?? "Austin, TX";
-  const unsub = unsubscribeUrl(buyer.contactEmail);
 
   const leadBlock = leads
     .map((l) => {
@@ -86,8 +77,6 @@ RULES:
 - NEVER use: "delve", "leverage", "seamless", "cutting-edge", "revolutionize", or corporate jargon
 - NEVER use emojis
 - Tone: plain, direct, like a colleague passing along a tip — not a sales pitch
-- Add this exact line at the very end, after the sign-off, on its own line: "To opt out: ${unsub}"
-
 SUBJECT LINE RULES:
 - 6-9 words, plain and specific
 - Reference the territory or a specific signal, not generic claims
@@ -105,7 +94,6 @@ Return ONLY valid JSON:
 function buildFollowupPrompt(buyer: BuyerContext, originalSubject: string): string {
   const senderName = process.env.SENDER_NAME ?? "ProofSignal Labs";
   const greeting = buyer.contactName ? `Hi ${buyer.contactName.split(" ")[0]},` : "Hi,";
-  const unsub = unsubscribeUrl(buyer.contactEmail);
 
   return `Write a short follow-up email for a B2B outreach sequence.
 
@@ -122,8 +110,6 @@ RULES:
 - Sign off: "Best,\\n${senderName} Team"
 - Reference the previous email naturally without being needy
 - NEVER use em dashes (— or --). Use commas or periods instead.
-- Add this exact line at the very end, after the sign-off, on its own line: "To opt out: ${unsub}"
-
 Return ONLY valid JSON:
 {
   "subject": "Re: ${originalSubject}",
@@ -134,7 +120,6 @@ Return ONLY valid JSON:
 function buildBreakupPrompt(buyer: BuyerContext, originalSubject: string): string {
   const senderName = process.env.SENDER_NAME ?? "ProofSignal Labs";
   const greeting = buyer.contactName ? `Hi ${buyer.contactName.split(" ")[0]},` : "Hi,";
-  const unsub = unsubscribeUrl(buyer.contactEmail);
 
   return `Write a final "breakup" email to close a cold outreach sequence.
 
@@ -149,8 +134,6 @@ RULES:
 - No guilt-tripping, no desperation
 - Sign off: "Best,\\n${senderName} Team"
 - NEVER use em dashes (— or --). Use commas or periods instead.
-- Add this exact line at the very end, after the sign-off, on its own line: "To opt out: ${unsub}"
-
 Return ONLY valid JSON:
 {
   "subject": "Closing the loop, ${buyer.buyerCompanyName}",

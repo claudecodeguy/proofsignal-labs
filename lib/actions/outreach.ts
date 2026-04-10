@@ -126,11 +126,19 @@ export async function sendDraft(messageId: string) {
     return { error: "Email is on suppression list" };
   }
 
+  // Append unsubscribe link programmatically — never rely on the LLM to include it
+  const secret = process.env.NEXTAUTH_SECRET ?? "proofsignal-unsub-secret";
+  const { createHmac } = await import("crypto");
+  const token = createHmac("sha256", secret).update(message.buyer.contactEmail.toLowerCase()).digest("hex");
+  const base = process.env.NEXTAUTH_URL ?? "https://proofsignallabs.com";
+  const unsubUrl = `${base}/api/unsubscribe?email=${encodeURIComponent(message.buyer.contactEmail)}&token=${token}`;
+  const bodyWithUnsub = `${message.bodyText}\n\nTo opt out: ${unsubUrl}`;
+
   const result = await sendEmail({
     to: message.buyer.contactEmail,
     toName: message.buyer.contactName ?? undefined,
     subject: message.subject,
-    textBody: message.bodyText,
+    textBody: bodyWithUnsub,
   });
 
   if (!result.success) {
