@@ -54,28 +54,40 @@ function buildInitialPrompt(buyer: BuyerContext, leads: LeadSummary[]): string {
   const greeting = buyer.contactName ? `Hi ${buyer.contactName.split(" ")[0]},` : "Hi,";
   const territory = buyer.territoryFocus ? `focused on ${buyer.territoryFocus}` : "in your target market";
 
-  return `Write a short, professional B2B cold outreach email from ${senderName} to a dental MSP/MSSP company.
+  return `Write a short, professional B2B cold outreach email from ${senderName} to a dental IT provider.
 
 SENDER: ${senderName}, ${senderAddress}
 RECIPIENT: ${buyer.contactName ?? "the team"} at ${buyer.buyerCompanyName} (${buyer.contactRole ?? "business development"})
 PURPOSE: Offer verified dental clinic leads ${territory}
 
-SAMPLE LEADS TO MENTION:
-${leadBlock}
+SAMPLE LEADS TO REFERENCE IN THE EMAIL BODY:
+${leadBlock || "(no leads provided — write email without specific examples, offer to send sample)"}
 
 RULES:
 - Greeting: "${greeting}"
-- 3–4 short paragraphs, no fluff
-- Mention 1–2 specific lead names with their city/state and a quick fit signal
-- Value prop: we pre-verify dental clinics, confirm multi-location, surface why-now triggers so they don't waste time prospecting
-- CTA: ask for a 15-min call or reply to see 3 more sample leads
+- 3 short paragraphs, plain and direct
+- If leads are provided: name 2-3 specific clinics with city and one concrete detail (location count, why-now trigger, or practice software)
+- If no leads: mention we have verified dental clinic leads in their territory and offer a free sample batch
+- Value prop: we pre-qualify dental clinics and surface why-now signals so they don't waste time on cold research
+- CTA: ask them to reply if they want to see the full lead details, or ask for a 15-min call
 - Sign off with: "Best,\\n${senderName} Team"
-- Do NOT use emojis, corporate jargon, or AI buzzwords
-- Tone: confident, precise, like a data analyst who knows their niche
+- NEVER use em dashes (— or --). Use commas or periods instead.
+- NEVER use: DSO, MSSP, MSP, or other acronyms the reader might not know
+- NEVER use: "delve", "leverage", "seamless", "cutting-edge", "revolutionize", or corporate jargon
+- NEVER use emojis
+- Tone: plain, direct, like a colleague passing along a tip — not a sales pitch
+- Add this line at the very end, after the sign-off: "To opt out of future emails, reply with unsubscribe."
+
+SUBJECT LINE RULES:
+- 6-9 words, plain and specific
+- Reference the territory or a specific signal, not generic claims
+- No clickbait, no all-caps, no punctuation tricks
+- Do not use acronyms
+- Examples of good subjects: "Dental clinics in Dallas with open IT roles", "Three multi-location practices in your area"
 
 Return ONLY valid JSON:
 {
-  "subject": "string (6-10 words, specific, no clickbait)",
+  "subject": "string",
   "body": "string (full email text, use \\n for line breaks)"
 }`;
 }
@@ -93,11 +105,13 @@ DAYS SINCE FIRST EMAIL: ~5
 
 RULES:
 - Greeting: "${greeting}"
-- 2 paragraphs max — bump the original, add one new angle
-- New angle: mention that dental clinic leads in their territory are time-sensitive (other MSPs are active)
+- 2 paragraphs max, bump the original and add one new angle
+- New angle: mention that dental clinic leads in their territory are time-sensitive
 - CTA: "Worth a quick look?" or similar low-pressure ask
 - Sign off: "Best,\\n${senderName} Team"
 - Reference the previous email naturally without being needy
+- NEVER use em dashes (— or --). Use commas or periods instead.
+- Add this line at the very end, after the sign-off: "To opt out of future emails, reply with unsubscribe."
 
 Return ONLY valid JSON:
 {
@@ -118,14 +132,16 @@ ORIGINAL EMAIL SUBJECT: ${originalSubject}
 
 RULES:
 - Greeting: "${greeting}"
-- 2 paragraphs — acknowledge they're busy, close gracefully
+- 2 paragraphs, acknowledge they're busy, close gracefully
 - Leave door open: "If dental clinic leads become relevant, feel free to reach out"
 - No guilt-tripping, no desperation
 - Sign off: "Best,\\n${senderName} Team"
+- NEVER use em dashes (— or --). Use commas or periods instead.
+- Add this line at the very end, after the sign-off: "To opt out of future emails, reply with unsubscribe."
 
 Return ONLY valid JSON:
 {
-  "subject": "Closing the loop — ${buyer.buyerCompanyName}",
+  "subject": "Closing the loop, ${buyer.buyerCompanyName}",
   "body": "string"
 }`;
 }

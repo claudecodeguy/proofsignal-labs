@@ -43,11 +43,11 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       to: input.toName ? `"${input.toName}" <${input.to}>` : input.to,
       subject: input.subject,
       text: input.textBody,
-      html: input.htmlBody ?? textToHtml(input.textBody),
+      // Plain text only — no HTML. HTML triggers Gmail Promotions tab.
       replyTo: input.replyTo ?? FROM_EMAIL,
       ...(input.messageId ? { references: input.messageId, inReplyTo: input.messageId } : {}),
       headers: {
-        "X-PM-Message-Stream": "outbound", // Postmark stream header
+        "X-PM-Message-Stream": "outbound",
       },
     });
 
