@@ -62,12 +62,13 @@ interface InstantlyLeadResponse {
 export async function getOrCreateCampaign(territory: string): Promise<string> {
   const campaignName = `PSL - ${territory}`;
 
-  // List existing campaigns (paginated, get first 100 — enough for all territories)
-  const data = await apiFetch<{ data: InstantlyCampaign[]; total: number }>(
+  // List existing campaigns — handle both array and {data:[]} response shapes
+  const raw = await apiFetch<InstantlyCampaign[] | { data: InstantlyCampaign[] }>(
     "/campaigns?limit=100&skip=0"
   );
+  const campaigns: InstantlyCampaign[] = Array.isArray(raw) ? raw : (raw.data ?? []);
 
-  const existing = data.data.find(
+  const existing = campaigns.find(
     (c) => c.name.toLowerCase() === campaignName.toLowerCase()
   );
   if (existing) return existing.id;
@@ -190,6 +191,6 @@ export interface InstantlyAccount {
 }
 
 export async function listSendingAccounts(): Promise<InstantlyAccount[]> {
-  const data = await apiFetch<{ data: InstantlyAccount[] }>("/accounts?limit=100");
-  return data.data ?? [];
+  const raw = await apiFetch<InstantlyAccount[] | { data: InstantlyAccount[] }>("/accounts?limit=100");
+  return Array.isArray(raw) ? raw : (raw.data ?? []);
 }
