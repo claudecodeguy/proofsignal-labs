@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { sendEmail } from "@/lib/email/send";
 import {
   generateInitialEmail,
   generateFollowupEmail,
@@ -11,9 +10,10 @@ import {
   type LeadSummary,
 } from "@/lib/email/draft";
 import { isEmailSuppressed } from "@/lib/ingestion/dedup";
+import { getOrCreateCampaign, addLeadToCampaign } from "@/lib/integrations/instantly";
 
 const SENDER_EMAIL = process.env.SENDER_EMAIL ?? "outreach@proofsignallabs.com";
-const SENDER_NAME = process.env.SENDER_NAME ?? "ProofSignal Labs";
+const SENDER_NAME  = process.env.SENDER_NAME  ?? "ProofSignal Labs";
 
 // ── Generate a draft (no send) ─────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ export async function generateDraft(formData: FormData) {
   return { success: true, messageId: message.id, subject: draft.subject, body: draft.body };
 }
 
-// ── Send a saved draft ─────────────────────────────────────────────────────────
+// ── Send a saved draft via Instantly ──────────────────────────────────────────
 
 export async function sendDraft(messageId: string) {
   const message = await db.outreachMessage.findUnique({
@@ -126,36 +126,66 @@ export async function sendDraft(messageId: string) {
     return { error: "Email is on suppression list" };
   }
 
-  // Append unsubscribe link programmatically — never rely on the LLM to include it
+  // Append unsubscribe link — Instantly will also add its own, but include ours too
   const secret = process.env.NEXTAUTH_SECRET ?? "proofsignal-unsub-secret";
   const { createHmac } = await import("crypto");
-  const token = createHmac("sha256", secret).update(message.buyer.contactEmail.toLowerCase()).digest("hex");
+  const token = createHmac("sha256", secret)
+    .update(message.buyer.contactEmail.toLowerCase())
+    .digest("hex");
   const base = process.env.NEXTAUTH_URL ?? "https://proofsignallabs.com";
-  const unsubUrl = `${base}/api/unsubscribe?email=${encodeURIComponent(message.buyer.contactEmail)}&token=${token}`;
+  const unsubUrl = `${base}/api/unsubscribe?email=${encodeURIComponent(
+    message.buyer.contactEmail
+  )}&token=${token}`;
   const bodyWithUnsub = `${message.bodyText}\n\nTo opt out: ${unsubUrl}`;
 
-  const result = await sendEmail({
-    to: message.buyer.contactEmail,
-    toName: message.buyer.contactName ?? undefined,
-    subject: message.subject,
-    textBody: bodyWithUnsub,
-  });
+  // Determine territory for campaign routing
+  const territory =
+    message.buyer.territoryFocus?.split(",")[0].trim() ||
+    message.buyer.buyerState ||
+    "General";
 
-  if (!result.success) {
+  try {
+    // Get or create the territory campaign
+    const campaignId = await getOrCreateCampaign(territory);
+
+    // Parse buyer first/last name
+    const nameParts = (message.buyer.contactName ?? "").trim().split(" ");
+    const firstName = nameParts[0] || message.buyer.buyerCompanyName;
+    const lastName = nameParts.slice(1).join(" ") || undefined;
+
+    // Push lead to Instantly — variables fill the campaign template
+    const instantlyLeadId = await addLeadToCampaign({
+      campaignId,
+      email: message.buyer.contactEmail,
+      firstName,
+      lastName,
+      companyName: message.buyer.buyerCompanyName,
+      emailSubject: message.subject,
+      emailBody: bodyWithUnsub,
+    });
+
     await db.outreachMessage.update({
       where: { id: messageId },
-      data: { status: "draft", errorMessage: result.error },
+      data: {
+        status: "sent",
+        sentAt: new Date(),
+        errorMessage: null,
+        instantlyLeadId,
+        instantlyCampaignId: campaignId,
+      },
     });
-    return { error: result.error };
+
+    revalidatePath("/admin/outreach");
+    return { success: true, via: "instantly", campaignId };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[instantly] Push failed:", msg);
+    await db.outreachMessage.update({
+      where: { id: messageId },
+      data: { errorMessage: msg },
+    });
+    return { error: msg };
   }
-
-  await db.outreachMessage.update({
-    where: { id: messageId },
-    data: { status: "sent", sentAt: new Date(), errorMessage: null },
-  });
-
-  revalidatePath("/admin/outreach");
-  return { success: true };
 }
 
 // ── Log a reply manually ───────────────────────────────────────────────────────

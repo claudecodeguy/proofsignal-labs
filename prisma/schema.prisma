@@ -393,11 +393,15 @@ model OutreachMessage {
   senderEmail      String
   senderName       String
 
-  sentAt           DateTime?
-  status           String               @default("draft") // draft | sent | replied | bounced | unsubscribed
-  replyAt          DateTime?
-  replyText        String?
-  errorMessage     String?
+  sentAt              DateTime?
+  status              String               @default("draft") // draft | sent | replied | bounced | unsubscribed
+  replyAt             DateTime?
+  replyText           String?
+  errorMessage        String?
+
+  // Instantly.ai tracking
+  instantlyLeadId     String?  // Lead ID returned by Instantly after push
+  instantlyCampaignId String?  // Instantly campaign ID used
 
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
