@@ -146,7 +146,7 @@ export default function MessageLog({ messages }: { messages: Message[] }) {
           <button
             onClick={handleSync}
             disabled={isSyncing || !hasSentViaInstantly}
-            className="btn-ghost text-xs px-3 py-1.5 disabled:opacity-40"
+            className="btn-primary text-xs px-4 py-2 disabled:opacity-40"
             title={!hasSentViaInstantly ? "No sent Instantly messages to sync" : ""}
           >
             {isSyncing ? "Syncing…" : "↻ Sync from Instantly"}
@@ -214,7 +214,7 @@ export default function MessageLog({ messages }: { messages: Message[] }) {
                     {msg.status === "sent" && (
                       <button
                         onClick={() => setLogReplyId(msg.id)}
-                        className="btn-ghost text-2xs px-2 py-1 text-ink-muted hover:text-ink whitespace-nowrap"
+                        className="btn-primary text-xs px-3 py-1.5 whitespace-nowrap"
                       >
                         Log Reply
                       </button>
