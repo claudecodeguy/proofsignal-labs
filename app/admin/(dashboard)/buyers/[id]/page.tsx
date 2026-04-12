@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatDate, formatDateTime } from "@/lib/utils";
+import EditBuyerForm from "./EditBuyerForm";
 
 export const metadata: Metadata = { title: "Buyer Detail" };
 
@@ -87,6 +88,21 @@ export default async function BuyerDetailPage({ params }: { params: Promise<{ id
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <EditBuyerForm buyer={{
+            id: buyer.id,
+            buyerCompanyName: buyer.buyerCompanyName,
+            domain: buyer.domain,
+            buyerCity: buyer.buyerCity,
+            buyerState: buyer.buyerState,
+            territoryFocus: buyer.territoryFocus,
+            contactName: buyer.contactName,
+            contactRole: buyer.contactRole,
+            contactEmail: buyer.contactEmail,
+            contactPhone: buyer.contactPhone,
+            stage: buyer.stage,
+            notes: buyer.notes,
+            buyerServices: buyer.buyerServices,
+          }} />
           <Link href="/admin/outreach" className="btn-primary text-xs px-4 py-2">
             Draft Outreach
           </Link>

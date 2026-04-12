@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatDateTime, statusBadgeClass } from "@/lib/utils";
+import EditCompanyForm from "./EditCompanyForm";
 
 export const metadata: Metadata = { title: "Company Detail" };
 
@@ -47,13 +48,19 @@ export default async function CompanyDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn-ghost text-xs">Re-run Extraction</button>
-          {company.validationStatus !== "approved" && (
-            <button className="btn-secondary text-xs">Promote to Lead</button>
-          )}
-          {company.validationStatus !== "rejected" && (
-            <button className="btn-danger text-xs">Override → Reject</button>
-          )}
+          <EditCompanyForm company={{
+            id: company.id,
+            companyName: company.companyName,
+            city: company.city,
+            state: company.state,
+            contactName: company.contactName,
+            contactRole: company.contactRole,
+            contactEmail: company.contactEmail,
+            contactPhone: company.contactPhone,
+            whyNowReason: company.whyNowReason,
+            validationStatus: company.validationStatus,
+            locationCountEstimate: company.locationCountEstimate,
+          }} />
         </div>
       </div>
 
