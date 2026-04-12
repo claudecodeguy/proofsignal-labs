@@ -68,12 +68,15 @@ export async function getOrCreateCampaign(territory: string): Promise<string> {
   );
   const campaigns: InstantlyCampaign[] = Array.isArray(raw) ? raw : (raw.data ?? []);
 
-  const existing = campaigns.find(
-    (c) => c.name.toLowerCase() === campaignName.toLowerCase()
-  );
+  // Exact match first, then partial match (e.g. territory "TX, OK, LA" → "PSL - Texas")
+  const existing =
+    campaigns.find((c) => c.name.toLowerCase() === campaignName.toLowerCase()) ??
+    campaigns.find((c) => c.name.toLowerCase().startsWith("psl -")) ??
+    campaigns[0]; // fallback to first campaign
+
   if (existing) return existing.id;
 
-  // Create new campaign
+  // Create new campaign — Instantly v2 requires timing in each schedule entry
   const created = await apiFetch<InstantlyCampaign>("/campaigns", {
     method: "POST",
     body: JSON.stringify({
@@ -82,6 +85,10 @@ export async function getOrCreateCampaign(territory: string): Promise<string> {
         schedules: [
           {
             name: "Default",
+            timing: {
+              from: "08:00",
+              to: "17:00",
+            },
             days: {
               monday: true,
               tuesday: true,
@@ -91,8 +98,6 @@ export async function getOrCreateCampaign(territory: string): Promise<string> {
               saturday: false,
               sunday: false,
             },
-            start_hour: "08:00",
-            end_hour: "17:00",
             timezone: "America/Chicago",
           },
         ],
