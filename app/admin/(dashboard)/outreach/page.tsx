@@ -1,24 +1,11 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
-import { formatDateTime } from "@/lib/utils";
 import DraftPanel from "./DraftPanel";
+import MessageLog from "./MessageLog";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Outreach" };
 
-const STATUS_BADGE: Record<string, string> = {
-  draft: "badge-neutral",
-  sent: "badge-teal",
-  replied: "badge-approved",
-  bounced: "badge-rejected",
-  unsubscribed: "badge-rejected",
-};
-
-const TYPE_LABEL: Record<string, string> = {
-  initial: "Initial",
-  followup: "Follow-up",
-  breakup: "Breakup",
-};
 
 export default async function OutreachPage() {
   const [messages, buyers, approvedLeads, suppressedCount, repliedCount, sentCount] =
@@ -26,7 +13,14 @@ export default async function OutreachPage() {
       db.outreachMessage.findMany({
         orderBy: { createdAt: "desc" },
         take: 100,
-        include: {
+        select: {
+          id: true,
+          subject: true,
+          emailType: true,
+          status: true,
+          sentAt: true,
+          replyText: true,
+          instantlyLeadId: true,
           buyer: { select: { buyerCompanyName: true, contactName: true, contactEmail: true } },
           leadsAttached: { select: { leadId: true } },
         },
@@ -95,69 +89,19 @@ export default async function OutreachPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Message log */}
         <div className="xl:col-span-2">
-          <h2 className="font-mono text-xs font-medium text-ink-faint uppercase tracking-wider mb-3">
-            Message Log
-          </h2>
-          <div className="card overflow-hidden">
-            {messages.length > 0 ? (
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Buyer</th>
-                    <th>Subject</th>
-                    <th>Type</th>
-                    <th>Leads</th>
-                    <th>Status</th>
-                    <th>Sent</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {messages.map((msg) => (
-                    <tr key={msg.id}>
-                      <td>
-                        <p className="font-medium text-sm text-ink">{msg.buyer.buyerCompanyName}</p>
-                        <p className="font-mono text-2xs text-ink-faint">
-                          {msg.buyer.contactName ?? msg.buyer.contactEmail}
-                        </p>
-                      </td>
-                      <td>
-                        <span className="text-sm text-ink-muted line-clamp-1">{msg.subject}</span>
-                      </td>
-                      <td>
-                        <span className="badge-neutral">
-                          {TYPE_LABEL[msg.emailType] ?? msg.emailType}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="font-mono text-xs text-ink-muted">
-                          {msg.leadsAttached.length > 0
-                            ? `${msg.leadsAttached.length} attached`
-                            : "—"}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={STATUS_BADGE[msg.status] ?? "badge-neutral"}>
-                          {msg.status}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="font-mono text-xs text-ink-faint">
-                          {msg.sentAt ? formatDateTime(msg.sentAt) : "—"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="py-14 text-center">
-                <p className="font-mono text-xs text-ink-faint">No messages yet.</p>
-                <p className="text-sm text-ink-muted mt-1">
-                  Use the draft panel to generate and send your first outreach.
-                </p>
-              </div>
-            )}
-          </div>
+          <MessageLog messages={messages.map((m) => ({
+            id: m.id,
+            buyerCompanyName: m.buyer.buyerCompanyName,
+            contactName: m.buyer.contactName,
+            contactEmail: m.buyer.contactEmail,
+            subject: m.subject,
+            emailType: m.emailType,
+            leadsCount: m.leadsAttached.length,
+            status: m.status,
+            sentAt: m.sentAt?.toISOString() ?? null,
+            replyText: m.replyText,
+            instantlyLeadId: m.instantlyLeadId,
+          }))} />
         </div>
 
         {/* Draft panel — client component */}

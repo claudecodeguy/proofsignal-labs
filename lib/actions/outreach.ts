@@ -10,7 +10,7 @@ import {
   type LeadSummary,
 } from "@/lib/email/draft";
 import { isEmailSuppressed } from "@/lib/ingestion/dedup";
-import { getOrCreateCampaign, addLeadToCampaign } from "@/lib/integrations/instantly";
+import { getOrCreateCampaign, addLeadToCampaign, getLeadStatus, getLeadReplies } from "@/lib/integrations/instantly";
 
 const SENDER_EMAIL = process.env.SENDER_EMAIL ?? "outreach@proofsignallabs.com";
 const SENDER_NAME  = process.env.SENDER_NAME  ?? "ProofSignal Labs";
@@ -191,16 +191,119 @@ export async function sendDraft(messageId: string) {
 // ── Log a reply manually ───────────────────────────────────────────────────────
 
 export async function logReply(messageId: string, replyText: string) {
+  const message = await db.outreachMessage.findUnique({
+    where: { id: messageId },
+    select: { buyerId: true, buyer: { select: { stage: true } } },
+  });
+
   await db.outreachMessage.update({
     where: { id: messageId },
-    data: {
-      status: "replied",
-      replyAt: new Date(),
-      replyText,
-    },
+    data: { status: "replied", replyAt: new Date(), replyText },
   });
+
+  // Advance buyer stage to engaged
+  if (message) {
+    const stagesBeforeEngaged = ["discovered", "enriched", "ready_for_outreach", "sample_sent"];
+    if (stagesBeforeEngaged.includes(message.buyer.stage)) {
+      await db.buyer.update({
+        where: { id: message.buyerId },
+        data: { stage: "engaged" },
+      });
+    }
+  }
+
   revalidatePath("/admin/outreach");
   return { success: true };
+}
+
+// ── Sync statuses from Instantly ──────────────────────────────────────────────
+
+export async function syncFromInstantly() {
+  // Only sync messages that were sent via Instantly and haven't replied/bounced yet
+  const sentMessages = await db.outreachMessage.findMany({
+    where: {
+      status: "sent",
+      instantlyLeadId: { not: null },
+    },
+    select: {
+      id: true,
+      instantlyLeadId: true,
+      instantlyCampaignId: true,
+      buyerId: true,
+      buyer: { select: { contactEmail: true, stage: true } },
+    },
+  });
+
+  if (sentMessages.length === 0) return { success: true, updated: 0 };
+
+  let updated = 0;
+
+  for (const msg of sentMessages) {
+    if (!msg.instantlyLeadId) continue;
+
+    const lead = await getLeadStatus(msg.instantlyLeadId);
+    if (!lead) continue;
+
+    // status -1 = unsubscribed, 4 = bounced
+    if (lead.status === -1) {
+      await db.outreachMessage.update({
+        where: { id: msg.id },
+        data: { status: "unsubscribed" },
+      });
+      if (msg.buyer.contactEmail) {
+        await db.suppressionRecord.upsert({
+          where: { email: msg.buyer.contactEmail.toLowerCase() },
+          update: { reason: "unsubscribed", suppressedAt: new Date() },
+          create: { email: msg.buyer.contactEmail.toLowerCase(), buyerId: msg.buyerId, reason: "unsubscribed" },
+        });
+      }
+      updated++;
+      continue;
+    }
+
+    if (lead.status === 4) {
+      await db.outreachMessage.update({
+        where: { id: msg.id },
+        data: { status: "bounced", errorMessage: "Hard bounce via Instantly" },
+      });
+      if (msg.buyer.contactEmail) {
+        await db.suppressionRecord.upsert({
+          where: { email: msg.buyer.contactEmail.toLowerCase() },
+          update: { reason: "bounce", suppressedAt: new Date() },
+          create: { email: msg.buyer.contactEmail.toLowerCase(), buyerId: msg.buyerId, reason: "bounce" },
+        });
+      }
+      updated++;
+      continue;
+    }
+
+    // Check for replies via unibox
+    if (msg.instantlyCampaignId && msg.buyer.contactEmail) {
+      const replies = await getLeadReplies(msg.instantlyCampaignId, msg.buyer.contactEmail);
+      if (replies.length > 0) {
+        const latest = replies[0];
+        await db.outreachMessage.update({
+          where: { id: msg.id },
+          data: {
+            status: "replied",
+            replyAt: new Date(latest.timestamp),
+            replyText: latest.body?.slice(0, 2000) ?? "(reply received via Instantly)",
+          },
+        });
+        const stagesBeforeEngaged = ["discovered", "enriched", "ready_for_outreach", "sample_sent"];
+        if (stagesBeforeEngaged.includes(msg.buyer.stage)) {
+          await db.buyer.update({
+            where: { id: msg.buyerId },
+            data: { stage: "engaged" },
+          });
+        }
+        updated++;
+      }
+    }
+  }
+
+  revalidatePath("/admin/outreach");
+  return { success: true, updated, total: sentMessages.length };
 }
 
 // ── Suppress a contact ────────────────────────────────────────────────────────

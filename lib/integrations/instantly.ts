@@ -141,6 +141,46 @@ export async function addLeadToCampaign(
   return lead.id;
 }
 
+// ── Lead status check ─────────────────────────────────────────────────────────
+
+interface InstantlyLeadDetail {
+  id: string;
+  email: string;
+  campaign_id: string;
+  /** 1=active, 2=completed, 3=paused, -1=unsubscribed, 4=bounced */
+  status: number;
+}
+
+export async function getLeadStatus(leadId: string): Promise<InstantlyLeadDetail | null> {
+  try {
+    return await apiFetch<InstantlyLeadDetail>(`/leads/${leadId}`);
+  } catch {
+    return null;
+  }
+}
+
+// ── Unibox: check for replies ──────────────────────────────────────────────────
+
+interface UniboxEmail {
+  id: string;
+  from_address: string;
+  subject: string;
+  body: string;
+  timestamp: string;
+  lead_id?: string;
+}
+
+export async function getLeadReplies(campaignId: string, leadEmail: string): Promise<UniboxEmail[]> {
+  try {
+    const data = await apiFetch<{ data: UniboxEmail[] }>(
+      `/unibox/emails?campaign_id=${encodeURIComponent(campaignId)}&email=${encodeURIComponent(leadEmail)}&limit=10`
+    );
+    return data.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 // ── Account helpers (for Settings page) ───────────────────────────────────────
 
 export interface InstantlyAccount {
