@@ -169,14 +169,21 @@ export async function addLeadToCampaign(
   };
 
   console.log(`[instantly] Adding lead ${params.email} to campaign ${params.campaignId}`);
-  console.log(`[instantly] Payload:`, JSON.stringify(payload));
 
   const lead = await apiFetch<InstantlyLeadResponse>("/leads", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 
-  console.log(`[instantly] Lead created:`, JSON.stringify(lead));
+  // Log full response so we can see exact shape in Vercel logs
+  console.log(`[instantly] Lead API response:`, JSON.stringify(lead));
+
+  if (!lead?.id) {
+    throw new Error(
+      `Instantly /leads returned 200 but no lead ID. Full response: ${JSON.stringify(lead)}`
+    );
+  }
+
   return lead.id;
 }
 
