@@ -62,6 +62,10 @@ describe("selectCampaign", () => {
     expect(selectCampaign(campaigns, "Texas")).toBeNull();
   });
 
+  it("returns null for empty list — caller should throw, not create", () => {
+    expect(selectCampaign([], "Texas")).toBeNull();
+  });
+
   it("handles case-insensitive name matching", () => {
     const campaigns = [
       camp("active-1", "psl - texas", ACTIVE),

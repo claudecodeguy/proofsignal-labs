@@ -95,14 +95,24 @@ export function selectCampaign(
 }
 
 /**
- * Returns the campaign ID for a territory, creating and activating one if needed.
- * One campaign per territory: "PSL - Texas", "PSL - Florida", etc.
- * Always prefers the ACTIVE campaign when duplicates exist.
+ * Returns the campaign ID for a territory.
+ *
+ * Resolution order:
+ *   1. INSTANTLY_CAMPAIGN_ID env var — fastest, most reliable, no API call needed
+ *   2. Name matching via API — fallback if env var not set
+ *
+ * NEVER auto-creates campaigns. If none found, throws a clear error.
+ * Set INSTANTLY_CAMPAIGN_ID in Vercel env vars to skip all name matching.
  */
 export async function getOrCreateCampaign(territory: string): Promise<string> {
-  const campaignName = `PSL - ${territory}`;
+  // Env var always wins — skip API entirely
+  const envId = process.env.INSTANTLY_CAMPAIGN_ID?.trim();
+  if (envId) {
+    console.log(`[instantly] Using campaign from env: ${envId}`);
+    return envId;
+  }
 
-  // List all campaigns — handle both array and {data:[]} response shapes
+  // Fallback: find by name via API
   const raw = await apiFetch<InstantlyCampaign[] | { data: InstantlyCampaign[] }>(
     "/campaigns?limit=100&skip=0"
   );
@@ -119,37 +129,10 @@ export async function getOrCreateCampaign(territory: string): Promise<string> {
     return existing.id;
   }
 
-  // Create and immediately activate
-  console.log(`[instantly] Creating new campaign: ${campaignName}`);
-  const created = await apiFetch<InstantlyCampaign>("/campaigns", {
-    method: "POST",
-    body: JSON.stringify({
-      name: campaignName,
-      campaign_schedule: {
-        schedules: [
-          {
-            name: "Default",
-            timing: { from: "08:00", to: "17:00" },
-            days: {
-              monday: true, tuesday: true, wednesday: true,
-              thursday: true, friday: true, saturday: false, sunday: false,
-            },
-            timezone: "America/Chicago",
-          },
-        ],
-      },
-    }),
-  });
-
-  // Activate the campaign so leads actually send
-  try {
-    await apiFetch(`/campaigns/${created.id}/activate`, { method: "POST" });
-    console.log(`[instantly] Campaign activated: ${created.id}`);
-  } catch (e) {
-    console.warn(`[instantly] Could not auto-activate campaign — activate manually in Instantly:`, e);
-  }
-
-  return created.id;
+  throw new Error(
+    `No Instantly campaign found for territory "${territory}". ` +
+    `Set INSTANTLY_CAMPAIGN_ID env var to your campaign ID in Vercel and .env.local.`
+  );
 }
 
 // ── Lead helpers ───────────────────────────────────────────────────────────────
