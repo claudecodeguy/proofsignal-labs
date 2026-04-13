@@ -156,21 +156,27 @@ export interface AddLeadParams {
 export async function addLeadToCampaign(
   params: AddLeadParams
 ): Promise<string> {
+  const payload = {
+    campaign_id: params.campaignId,
+    email: params.email,
+    first_name: params.firstName,
+    last_name: params.lastName ?? "",
+    company_name: params.companyName,
+    variables: {
+      email_subject: params.emailSubject,
+      email_body: params.emailBody,
+    },
+  };
+
+  console.log(`[instantly] Adding lead ${params.email} to campaign ${params.campaignId}`);
+  console.log(`[instantly] Payload:`, JSON.stringify(payload));
+
   const lead = await apiFetch<InstantlyLeadResponse>("/leads", {
     method: "POST",
-    body: JSON.stringify({
-      campaign_id: params.campaignId,
-      email: params.email,
-      first_name: params.firstName,
-      last_name: params.lastName ?? "",
-      company_name: params.companyName,
-      variables: {
-        email_subject: params.emailSubject,
-        email_body: params.emailBody,
-      },
-    }),
+    body: JSON.stringify(payload),
   });
 
+  console.log(`[instantly] Lead created:`, JSON.stringify(lead));
   return lead.id;
 }
 
