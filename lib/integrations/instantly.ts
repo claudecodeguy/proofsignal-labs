@@ -170,37 +170,18 @@ export async function addLeadToCampaign(
 
   console.log(`[instantly] Adding lead ${params.email} to campaign ${params.campaignId}`);
 
-  // Use the campaign-specific endpoint so the lead is attached to the campaign
-  const lead = await apiFetch<InstantlyLeadResponse>(
-    `/campaigns/${params.campaignId}/leads`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        leads: [
-          {
-            email: params.email,
-            first_name: params.firstName,
-            last_name: params.lastName ?? "",
-            company_name: params.companyName,
-            variables: {
-              email_subject: params.emailSubject,
-              email_body: params.emailBody,
-            },
-          },
-        ],
-      }),
-    }
-  );
+  const lead = await apiFetch<InstantlyLeadResponse>("/leads", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 
   console.log(`[instantly] Lead API response:`, JSON.stringify(lead));
 
-  // Campaign leads endpoint returns the lead object or a batch result
-  const leadId: string = (lead as { id?: string })?.id ?? (lead as unknown as { leads?: { id: string }[] })?.leads?.[0]?.id ?? "";
-  if (!leadId) {
-    throw new Error(`Instantly campaign leads endpoint returned no lead ID. Response: ${JSON.stringify(lead)}`);
+  if (!lead?.id) {
+    throw new Error(`Instantly /leads returned no lead ID. Response: ${JSON.stringify(lead)}`);
   }
 
-  return leadId;
+  return lead.id;
 }
 
 // ── Lead status check ─────────────────────────────────────────────────────────
