@@ -55,16 +55,49 @@ interface InstantlyLeadResponse {
 
 // ── Campaign helpers ───────────────────────────────────────────────────────────
 
+// Instantly campaign status codes
+const STATUS_ACTIVE = 1;
+
+/**
+ * Pure function — selects the best campaign from a list for a given territory.
+ * Exported for unit testing.
+ *
+ * Priority (highest first):
+ *   1. Active campaign with exact name match
+ *   2. Active campaign with "PSL -" prefix
+ *   3. Any campaign with exact name match (non-active)
+ *   4. Any campaign with "PSL -" prefix (non-active)
+ *   5. null — caller should create a new one
+ */
+export function selectCampaign(
+  campaigns: InstantlyCampaign[],
+  territory: string
+): InstantlyCampaign | null {
+  const name = `PSL - ${territory}`.toLowerCase();
+
+  // 1. Active + exact territory match — best possible
+  const activeExact = campaigns.find((c) => c.status === STATUS_ACTIVE && c.name.toLowerCase() === name);
+  if (activeExact) return activeExact;
+
+  // 2. Non-active exact territory match — right territory, just needs activation
+  const anyExact = campaigns.find((c) => c.name.toLowerCase() === name);
+  if (anyExact) return anyExact;
+
+  // 3. Active campaign from any PSL territory — fallback, still sends
+  const activePrefix = campaigns.find((c) => c.status === STATUS_ACTIVE && c.name.toLowerCase().startsWith("psl -"));
+  if (activePrefix) return activePrefix;
+
+  // 4. Any PSL campaign — last resort before creating
+  const anyPrefix = campaigns.find((c) => c.name.toLowerCase().startsWith("psl -"));
+  if (anyPrefix) return anyPrefix;
+
+  return null;
+}
+
 /**
  * Returns the campaign ID for a territory, creating and activating one if needed.
- *
- * Resolution order:
- *   1. Exact name match: "PSL - <territory>" (any status)
- *   2. Any campaign starting with "PSL -" (any status)
- *   3. Create a new campaign and immediately activate it
- *
- * Campaign names drive territory routing automatically — no hardcoding needed.
  * One campaign per territory: "PSL - Texas", "PSL - Florida", etc.
+ * Always prefers the ACTIVE campaign when duplicates exist.
  */
 export async function getOrCreateCampaign(territory: string): Promise<string> {
   const campaignName = `PSL - ${territory}`;
@@ -75,15 +108,14 @@ export async function getOrCreateCampaign(territory: string): Promise<string> {
   );
   const all: InstantlyCampaign[] = Array.isArray(raw) ? raw : (raw.data ?? []);
 
-  console.log(`[instantly] ${all.length} campaigns:`, all.map((c) => `${c.name} (${c.id}, status=${c.status})`));
+  console.log(
+    `[instantly] ${all.length} campaigns:`,
+    all.map((c) => `${c.name} (${c.id}, status=${c.status})`)
+  );
 
-  // Match by name regardless of status
-  const existing =
-    all.find((c) => c.name.toLowerCase() === campaignName.toLowerCase()) ??
-    all.find((c) => c.name.toLowerCase().startsWith("psl -"));
-
+  const existing = selectCampaign(all, territory);
   if (existing) {
-    console.log(`[instantly] Using campaign: ${existing.name} (${existing.id})`);
+    console.log(`[instantly] Using campaign: ${existing.name} (${existing.id}, status=${existing.status})`);
     return existing.id;
   }
 
