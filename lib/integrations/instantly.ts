@@ -56,56 +56,47 @@ interface InstantlyLeadResponse {
 // ── Campaign helpers ───────────────────────────────────────────────────────────
 
 /**
- * Returns the campaign ID for a territory, creating one if it doesn't exist.
- * Campaign names are prefixed "PSL - " to keep them identifiable.
+ * Returns the campaign ID for a territory.
+ *
+ * Resolution order:
+ *   1. INSTANTLY_CAMPAIGN_ID env var — hardcoded override, always wins
+ *   2. Exact name match: "PSL - <territory>"
+ *   3. Any active campaign whose name starts with "PSL -"
+ *   4. Any active campaign (first in list)
+ *   Never creates a new campaign — avoids accidental draft creation.
  */
 export async function getOrCreateCampaign(territory: string): Promise<string> {
+  // Hardcoded override — safest, no name-matching needed
+  const envId = process.env.INSTANTLY_CAMPAIGN_ID?.trim();
+  if (envId) return envId;
+
   const campaignName = `PSL - ${territory}`;
 
   // List existing campaigns — handle both array and {data:[]} response shapes
   const raw = await apiFetch<InstantlyCampaign[] | { data: InstantlyCampaign[] }>(
     "/campaigns?limit=100&skip=0"
   );
-  const campaigns: InstantlyCampaign[] = Array.isArray(raw) ? raw : (raw.data ?? []);
+  const all: InstantlyCampaign[] = Array.isArray(raw) ? raw : (raw.data ?? []);
 
-  // Exact match first, then partial match (e.g. territory "TX, OK, LA" → "PSL - Texas")
+  console.log(`[instantly] ${all.length} campaigns found:`, all.map((c) => `${c.name} (${c.id}, status=${c.status})`));
+
+  // Only consider active campaigns (status 1)
+  const active = all.filter((c) => c.status === 1);
+
   const existing =
-    campaigns.find((c) => c.name.toLowerCase() === campaignName.toLowerCase()) ??
-    campaigns.find((c) => c.name.toLowerCase().startsWith("psl -")) ??
-    campaigns[0]; // fallback to first campaign
+    active.find((c) => c.name.toLowerCase() === campaignName.toLowerCase()) ??
+    active.find((c) => c.name.toLowerCase().startsWith("psl -")) ??
+    active[0];
 
-  if (existing) return existing.id;
+  if (existing) {
+    console.log(`[instantly] Using campaign: ${existing.name} (${existing.id})`);
+    return existing.id;
+  }
 
-  // Create new campaign — Instantly v2 requires timing in each schedule entry
-  const created = await apiFetch<InstantlyCampaign>("/campaigns", {
-    method: "POST",
-    body: JSON.stringify({
-      name: campaignName,
-      campaign_schedule: {
-        schedules: [
-          {
-            name: "Default",
-            timing: {
-              from: "08:00",
-              to: "17:00",
-            },
-            days: {
-              monday: true,
-              tuesday: true,
-              wednesday: true,
-              thursday: true,
-              friday: true,
-              saturday: false,
-              sunday: false,
-            },
-            timezone: "America/Chicago",
-          },
-        ],
-      },
-    }),
-  });
-
-  return created.id;
+  throw new Error(
+    `No active Instantly campaign found for territory "${territory}". ` +
+    `Set INSTANTLY_CAMPAIGN_ID env var to your campaign ID, or activate a "PSL -" campaign in Instantly.`
+  );
 }
 
 // ── Lead helpers ───────────────────────────────────────────────────────────────
