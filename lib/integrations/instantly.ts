@@ -53,6 +53,14 @@ interface InstantlyLeadResponse {
   status: number;
 }
 
+interface InstantlyBulkAddResponse {
+  status: string;
+  leads_uploaded: number;
+  skipped_count: number;
+  duplicated_leads: number;
+  created_leads: { id: string; email: string }[];
+}
+
 // ── Campaign helpers ───────────────────────────────────────────────────────────
 
 // Instantly campaign status codes
@@ -156,32 +164,42 @@ export interface AddLeadParams {
 export async function addLeadToCampaign(
   params: AddLeadParams
 ): Promise<string> {
-  const payload = {
-    campaign_id: params.campaignId,
-    email: params.email,
-    first_name: params.firstName,
-    last_name: params.lastName ?? "",
-    company_name: params.companyName,
-    variables: {
-      email_subject: params.emailSubject,
-      email_body: params.emailBody,
-    },
-  };
-
   console.log(`[instantly] Adding lead ${params.email} to campaign ${params.campaignId}`);
 
-  const lead = await apiFetch<InstantlyLeadResponse>("/leads", {
+  // /leads/add is the correct endpoint to attach a lead to a campaign
+  // /leads (create) ignores campaign_id silently — leads end up globally only
+  const result = await apiFetch<InstantlyBulkAddResponse>("/leads/add", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      campaign_id: params.campaignId,
+      leads: [
+        {
+          email: params.email,
+          first_name: params.firstName,
+          last_name: params.lastName ?? "",
+          company_name: params.companyName,
+          custom_variables: {
+            email_subject: params.emailSubject,
+            email_body: params.emailBody,
+          },
+        },
+      ],
+      skip_if_in_workspace: false,
+      skip_if_in_campaign: false,
+    }),
   });
 
-  console.log(`[instantly] Lead API response:`, JSON.stringify(lead));
+  console.log(`[instantly] Bulk add response:`, JSON.stringify(result));
 
-  if (!lead?.id) {
-    throw new Error(`Instantly /leads returned no lead ID. Response: ${JSON.stringify(lead)}`);
+  if (result.leads_uploaded === 0) {
+    throw new Error(
+      `Instantly accepted the request but added 0 leads. ` +
+      `skipped=${result.skipped_count}, duplicates=${result.duplicated_leads}. ` +
+      `Full response: ${JSON.stringify(result)}`
+    );
   }
 
-  return lead.id;
+  return result.created_leads?.[0]?.id ?? params.email;
 }
 
 // ── Lead status check ─────────────────────────────────────────────────────────
